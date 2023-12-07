@@ -1,0 +1,91 @@
+---
+title: "Final project for SA23204159"
+author: "Zhijie Gong"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Final project for SA23204159}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Overview
+
+__SA23204159__ is a simple R package developed to complete the final project for the 'Statistical Computing' course. This package include one data set, namely, _lung_ and five functions,namely _XGB_md_
+(train a predictive model use XGBoost algorithm), _plot_roc_(a function used to plot roc curve), _plot_confusion_matrix_(a function used to visualize confusion matrix), _studentized_bootstrap_ci_(construct studentized bootstrap CI), _studentized_bootstrap_ci_C_(Rcpp version of studentized_bootstrap_ci)
+
+ _lung_ is a dataset which contained information of patients who have lung cancer .This dataset is used to illustrate the how to construct a XGBoost prognostic model.The last two column is the endpoint status and survival months of patient,Status 1 represents the patient is censored at endpoint and status 2 represents the patient is dead at endpoint.The rest of colmuns are the covariate.
+ 
+The R package 'microbenchmark' can be used to benchmark the above R and C++ functions.
+
+Show details of dataset _lung_.
+
+lung数据集包含了肺癌患者的部分信息，倒数第二列为患者的存活时间，单位为月，倒数第一列为患者在endpoint的状态，1代表患者在endpoint删失，2代表患者在endpoint死亡。其余列为患者的临床特征。
+```{r}
+library(SA23204159)
+data(lung)
+head(lung,5)
+```
+
+an example of _XGB_md_, _plot_roc_, _plot_confusion_matrix_
+XGB_md函数用于构造肺癌患者的生存预测模型，其过程用到XGBoost算法，这个函数接受两个参数，第一个参数为n_month，代表需要预测在第几月时患者的生存状态，第二个参数为data，即构建模型所使用的数据集，这个数据集可以是lung，也可以是其他的数据集，但是要求data的倒数第一列为患者在endpoint的生存状态，倒数第二列为患者的存活时间。
+
+plot_roc用于绘制上述模型预测结果的roc曲线。
+
+plot_confusion_matrix用于可视化上述模型预测结果的混淆矩阵。
+
+```{r}
+library(SA23204159)
+data(lung)
+data=lung
+##由于数据较多，从数据中随机抽取2000个样本
+ind<-sample(c(1:dim(data)[1]),2000)
+data<-data[ind,]
+res<-XGB_md(18,data)
+plot_roc(res$prob_train)
+plot_confusion_matrix(res$confusion_matrix)
+```
+an example of _studentized_bootstrap_ci_ and _studentized_bootstrap_ci_C_,use dataset _lung_ to construct 95% CI of survival month.
+
+studentized_bootstrap_ci函数用于构造某一变量的studentized bootstrap 95%置信区间，在本例中，使用studentized_bootstrap_ci函数构造肺癌患者存活时间的95%置信区间，
+
+studentized_bootstrap_ci_C函数是上述函数的CPP版。
+
+```{r}
+library(SA23204159)
+data(lung)
+data=lung
+##由于数据较多，从数据中随机抽取1000个样本
+ind<-sample(c(1:dim(data)[1]),1000)
+data<-data[ind,]
+ci1<-studentized_bootstrap_ci(data$存活时间)
+ci2<-studentized_bootstrap_ci_C(data$存活时间) ##Rcpp version
+print(ci1)
+print(ci2)
+```
+
+
+## Benchmarking _studentized_bootstrap_ci_ and _studentized_bootstrap_ci_C_
+
+The R code for benchmarking _studentized_bootstrap_ci_ and _studentized_bootstrap_ci_C_ is as follows.
+
+比较studentized_bootstrap_ci函数和studentized_bootstrap_ci_C的运行时间。
+
+```{r}
+library(microbenchmark)
+library(SA23204159)
+data(lung)
+data=lung
+##由于数据较多，从数据中随机抽取500个样本
+ind<-sample(c(1:dim(data)[1]),500)
+data<-data[ind,]
+tm <- microbenchmark(
+  vR = studentized_bootstrap_ci(data$存活时间),
+  vC = studentized_bootstrap_ci_C(data$存活时间),   ##Rcpp version
+  times = 20
+)
+knitr::kable(summary(tm)[,c(1,3,5,6)])
+```
+
+The results again show an evident computational speed gain of C++ against R.
+

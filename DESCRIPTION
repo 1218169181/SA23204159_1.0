@@ -1,0 +1,17 @@
+Package: SA23204159
+Type: Package
+Title: Final project for SA23204159
+Version: 1.0
+Date: 2023-12-04
+Author: Zhijie Gong
+Maintainer: Zhijie Gong <1218469181@qq.com>
+Description: Several R and Rcpp function are included in this package for illustration.
+License: GPL (>= 2)
+Imports: Rcpp, microbenchmark,Matrix,caret,pROC,xgboost,stats,e1071,DAAG,boot,bootstrap,coda,knitr, rmarkdown
+LinkingTo: Rcpp
+RoxygenNote: 7.2.3
+Encoding: UTF-8
+VignetteBuilder: knitr
+Suggests:knitr, rmarkdown
+URL: http://github.com/1218169181/SA23204159
+BugReports: http://github.com/1218169181/SA23204159/issues
