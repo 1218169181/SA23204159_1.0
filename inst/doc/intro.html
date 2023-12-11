@@ -12,7 +12,7 @@
 
 <meta name="author" content="Zhijie Gong" />
 
-<meta name="date" content="2023-12-07" />
+<meta name="date" content="2023-12-11" />
 
 <title>Final project for SA23204159</title>
 
@@ -340,7 +340,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Final project for SA23204159</h1>
 <h4 class="author">Zhijie Gong</h4>
-<h4 class="date">2023-12-07</h4>
+<h4 class="date">2023-12-11</h4>
 
 
 
@@ -353,18 +353,17 @@ functions,namely <em>XGB_md</em> (train a predictive model use XGBoost
 algorithm), <em>plot_roc</em>(a function used to plot roc curve),
 <em>plot_confusion_matrix</em>(a function used to visualize confusion
 matrix), <em>studentized_bootstrap_ci</em>(construct studentized
-bootstrap CI), <em>studentized_bootstrap_ci_C</em>(Rcpp version of
+bootstrap CI), <em>studentized_bootstrap_ci_C</em> (Rcpp version of
 studentized_bootstrap_ci)</p>
-<p><em>lung</em> is a dataset which contained information of patients
-who have lung cancer .This dataset is used to illustrate the how to
+</div>
+<div id="lung-data-set" class="section level2">
+<h2><em>lung</em> data set</h2>
+<p><em>lung</em> is a data set which contained information of patients
+who have lung cancer .This data set is used to illustrate the how to
 construct a XGBoost prognostic model.The last two column is the endpoint
 status and survival months of patient,Status 1 represents the patient is
 censored at endpoint and status 2 represents the patient is dead at
-endpoint.The rest of colmuns are the covariate.</p>
-<p>The R package ‘microbenchmark’ can be used to benchmark the above R
-and C++ functions.</p>
-<p>Show details of dataset <em>lung</em>.</p>
-<p>lung数据集包含了肺癌患者的部分信息，倒数第二列为患者的存活时间，单位为月，倒数第一列为患者在endpoint的状态，1代表患者在endpoint删失，2代表患者在endpoint死亡。其余列为患者的临床特征。</p>
+endpoint.The rest of columns are the covariate.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(SA23204159)</span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">data</span>(lung)</span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">head</span>(lung,<span class="dv">5</span>)</span></code></pre></div>
@@ -386,60 +385,293 @@ and C++ functions.</p>
 ## 3        3    2
 ## 4        2    2
 ## 5       15    2</code></pre>
-<p>an example of <em>XGB_md</em>, <em>plot_roc</em>,
-<em>plot_confusion_matrix</em>
-XGB_md函数用于构造肺癌患者的生存预测模型，其过程用到XGBoost算法，这个函数接受两个参数，第一个参数为n_month，代表需要预测在第几月时患者的生存状态，第二个参数为data，即构建模型所使用的数据集，这个数据集可以是lung，也可以是其他的数据集，但是要求data的倒数第一列为患者在endpoint的生存状态，倒数第二列为患者的存活时间。</p>
-<p>plot_roc用于绘制上述模型预测结果的roc曲线。</p>
-<p>plot_confusion_matrix用于可视化上述模型预测结果的混淆矩阵。</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">library</span>(SA23204159)</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">data</span>(lung)</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>data<span class="ot">=</span>lung</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="do">##由于数据较多，从数据中随机抽取2000个样本</span></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>ind<span class="ot">&lt;-</span><span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(data)[<span class="dv">1</span>]),<span class="dv">2000</span>)</span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>data<span class="ot">&lt;-</span>data[ind,]</span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>res<span class="ot">&lt;-</span><span class="fu">XGB_md</span>(<span class="dv">18</span>,data)</span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="fu">plot_roc</span>(res<span class="sc">$</span>prob_train)</span></code></pre></div>
+</div>
+<div id="xgb_md" class="section level2">
+<h2><em>XGB_md</em></h2>
+<p><em>XGB_md</em>
+函数用于构造肺癌患者的生存预测模型，其过程用到XGBoost算法，这个函数接受两个参数，第一个参数为n_month，代表需要预测在第几月时患者的生存状态，第二个参数为data，即构建模型所使用的数据集，这个数据集可以是lung，也可以是其他的数据集，但是要求data的倒数第一列为患者在endpoint的生存状态，倒数第二列为患者的存活时间。</p>
+<p>该函数有四个返回值:prob_train,prob_test,confusion_matrix,md。prob_train为模型在训练集集上预测的在n_month时的死亡概率，prob_test为模型在测试集上预测的在n_month时的死亡概率，confusion_matrix为测试集上预测结果的混淆矩阵，md为拟合的XGBoost预测模型。</p>
+<p>The source R code for <em>XGB_md</em> is as follows:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>XGB_md<span class="ot">&lt;-</span><span class="cf">function</span>(n_month,data,<span class="at">seed_number=</span><span class="dv">12345</span>){</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="fu">set.seed</span>(seed_number)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  n<span class="ot">&lt;-</span><span class="fu">dim</span>(data)[<span class="dv">1</span>]  <span class="do">##nrow of data</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  p<span class="ot">&lt;-</span><span class="fu">dim</span>(data)[<span class="dv">2</span>]  <span class="do">##ncol of data</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  os<span class="ot">&lt;-</span><span class="fu">numeric</span>(n)   <span class="do">##used to save the survival information of patients at n_month</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  status<span class="ot">&lt;-</span>data[,p]  <span class="do">##patients&#39; endpoint status</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  survival_month<span class="ot">&lt;-</span>data[,(p<span class="dv">-1</span>)]  <span class="do">##the information of survival months</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  data_temp<span class="ot">&lt;-</span>data[,<span class="fu">c</span>(<span class="sc">-</span>(p<span class="dv">-1</span>),<span class="sc">-</span>p)] <span class="do">##delete column survival and status</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  data_temp<span class="ot">&lt;-</span><span class="fu">lapply</span>(data_temp,factor)</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  data_temp<span class="ot">&lt;-</span><span class="fu">lapply</span>(data_temp,as.numeric)</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  data_temp<span class="ot">&lt;-</span><span class="fu">data.frame</span>(data_temp)</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  </span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  <span class="do">## patients status at n_month,0:patient is alive,1:patient is dead,2:patient is censored before n_month</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span>n)){</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>    <span class="cf">if</span>(survival_month[i]<span class="sc">&lt;</span>n_month){</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>      <span class="cf">if</span>(status[i]<span class="sc">==</span><span class="dv">2</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>      {</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>        os[i]<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>      }</span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>      <span class="cf">else</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>      {</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a>        os[i]<span class="ot">=</span><span class="dv">2</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>      }</span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>    }</span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>    <span class="cf">else</span>{</span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a>      os[i]<span class="ot">=</span><span class="dv">0</span></span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a>    }</span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a>  }</span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a>  </span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a>  data_temp<span class="sc">$</span>os<span class="ot">&lt;-</span><span class="fu">as.numeric</span>(os)</span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a>  <span class="do">##delete the part of data which patients have been censored before n_month</span></span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a>  data_temp<span class="ot">&lt;-</span>data_temp[data_temp<span class="sc">$</span>os<span class="sc">!=</span><span class="dv">2</span>,]</span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a>  <span class="do">##devide the data into train set(0.7) and test set(0.3)</span></span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a>  train_ind<span class="ot">&lt;-</span><span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(data_temp),<span class="fu">round</span>(<span class="fu">nrow</span>(data_temp)<span class="sc">*</span><span class="fl">0.7</span>))</span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a>  train_data<span class="ot">&lt;-</span>data_temp[train_ind,]</span>
+<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a>  test_data<span class="ot">&lt;-</span>data_temp[<span class="sc">-</span>train_ind,]</span>
+<span id="cb3-37"><a href="#cb3-37" tabindex="-1"></a>  </span>
+<span id="cb3-38"><a href="#cb3-38" tabindex="-1"></a>  </span>
+<span id="cb3-39"><a href="#cb3-39" tabindex="-1"></a>  train_matrix <span class="ot">&lt;-</span> <span class="fu">sparse.model.matrix</span>(os <span class="sc">~</span> .<span class="sc">-</span><span class="dv">1</span>, <span class="at">data =</span> train_data)</span>
+<span id="cb3-40"><a href="#cb3-40" tabindex="-1"></a>  test_matrix <span class="ot">&lt;-</span> <span class="fu">sparse.model.matrix</span>(os<span class="sc">~</span> .<span class="sc">-</span><span class="dv">1</span>, <span class="at">data =</span> test_data)</span>
+<span id="cb3-41"><a href="#cb3-41" tabindex="-1"></a>  train_fin <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">data=</span>train_matrix,<span class="at">label=</span><span class="fu">as.numeric</span>(train_data<span class="sc">$</span>os)) </span>
+<span id="cb3-42"><a href="#cb3-42" tabindex="-1"></a>  test_fin <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">data=</span>test_matrix,<span class="at">label=</span><span class="fu">as.numeric</span>(test_data<span class="sc">$</span>os)) </span>
+<span id="cb3-43"><a href="#cb3-43" tabindex="-1"></a>  dtrain <span class="ot">&lt;-</span> <span class="fu">xgb.DMatrix</span>(<span class="at">data =</span> train_fin<span class="sc">$</span>data, <span class="at">label =</span> train_fin<span class="sc">$</span>label) </span>
+<span id="cb3-44"><a href="#cb3-44" tabindex="-1"></a>  dtest <span class="ot">&lt;-</span> <span class="fu">xgb.DMatrix</span>(<span class="at">data =</span> test_fin<span class="sc">$</span>data, <span class="at">label =</span> test_fin<span class="sc">$</span>label)</span>
+<span id="cb3-45"><a href="#cb3-45" tabindex="-1"></a>  </span>
+<span id="cb3-46"><a href="#cb3-46" tabindex="-1"></a>  best_param <span class="ot">=</span> <span class="fu">list</span>()</span>
+<span id="cb3-47"><a href="#cb3-47" tabindex="-1"></a>  best_seednumber <span class="ot">=</span> seed_number</span>
+<span id="cb3-48"><a href="#cb3-48" tabindex="-1"></a>  best_logloss <span class="ot">=</span> <span class="cn">Inf</span></span>
+<span id="cb3-49"><a href="#cb3-49" tabindex="-1"></a>  best_logloss_index <span class="ot">=</span> <span class="dv">0</span></span>
+<span id="cb3-50"><a href="#cb3-50" tabindex="-1"></a>  </span>
+<span id="cb3-51"><a href="#cb3-51" tabindex="-1"></a>  <span class="do">##use cross validation XGBoost to search for a good combination of parameter</span></span>
+<span id="cb3-52"><a href="#cb3-52" tabindex="-1"></a>  <span class="cf">for</span> (iter <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>) {</span>
+<span id="cb3-53"><a href="#cb3-53" tabindex="-1"></a>    param <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">objective =</span> <span class="st">&quot;multi:softprob&quot;</span>,</span>
+<span id="cb3-54"><a href="#cb3-54" tabindex="-1"></a>                  <span class="at">eval_metric =</span> <span class="st">&quot;mlogloss&quot;</span>,</span>
+<span id="cb3-55"><a href="#cb3-55" tabindex="-1"></a>                  <span class="at">num_class =</span> <span class="dv">2</span>,</span>
+<span id="cb3-56"><a href="#cb3-56" tabindex="-1"></a>                  <span class="at">max_depth =</span> <span class="fu">sample</span>(<span class="dv">6</span><span class="sc">:</span><span class="dv">10</span>, <span class="dv">1</span>),</span>
+<span id="cb3-57"><a href="#cb3-57" tabindex="-1"></a>                  <span class="at">eta =</span> <span class="fu">runif</span>(<span class="dv">1</span>, .<span class="dv">01</span>, .<span class="dv">3</span>),</span>
+<span id="cb3-58"><a href="#cb3-58" tabindex="-1"></a>                  <span class="at">gamma =</span> <span class="fu">runif</span>(<span class="dv">1</span>, <span class="fl">0.0</span>,<span class="dv">2</span>), </span>
+<span id="cb3-59"><a href="#cb3-59" tabindex="-1"></a>                  <span class="at">subsample =</span> <span class="fu">runif</span>(<span class="dv">1</span>, .<span class="dv">6</span>, .<span class="dv">9</span>),</span>
+<span id="cb3-60"><a href="#cb3-60" tabindex="-1"></a>                  <span class="at">colsample_bytree =</span> <span class="fu">runif</span>(<span class="dv">1</span>, .<span class="dv">5</span>, .<span class="dv">8</span>), </span>
+<span id="cb3-61"><a href="#cb3-61" tabindex="-1"></a>                  <span class="at">min_child_weight =</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">40</span>, <span class="dv">1</span>),</span>
+<span id="cb3-62"><a href="#cb3-62" tabindex="-1"></a>                  <span class="at">max_delta_step =</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="dv">1</span>),</span>
+<span id="cb3-63"><a href="#cb3-63" tabindex="-1"></a>                  <span class="at">alpha=</span><span class="fu">runif</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">3</span>))</span>
+<span id="cb3-64"><a href="#cb3-64" tabindex="-1"></a>    </span>
+<span id="cb3-65"><a href="#cb3-65" tabindex="-1"></a>    cv.nround <span class="ot">=</span> <span class="dv">1000</span></span>
+<span id="cb3-66"><a href="#cb3-66" tabindex="-1"></a>    cv.nfold <span class="ot">=</span> <span class="dv">10</span></span>
+<span id="cb3-67"><a href="#cb3-67" tabindex="-1"></a>    seed.number <span class="ot">=</span> <span class="fu">sample.int</span>(<span class="dv">10000</span>, <span class="dv">1</span>)[[<span class="dv">1</span>]]</span>
+<span id="cb3-68"><a href="#cb3-68" tabindex="-1"></a>    <span class="fu">set.seed</span>(seed.number)</span>
+<span id="cb3-69"><a href="#cb3-69" tabindex="-1"></a>    mdcv <span class="ot">&lt;-</span> <span class="fu">xgb.cv</span>(<span class="at">data=</span>dtrain, <span class="at">params =</span> param, <span class="at">nthread=</span><span class="dv">6</span>, </span>
+<span id="cb3-70"><a href="#cb3-70" tabindex="-1"></a>                   <span class="at">nfold=</span>cv.nfold, <span class="at">nrounds=</span>cv.nround,</span>
+<span id="cb3-71"><a href="#cb3-71" tabindex="-1"></a>                   <span class="at">verbose =</span> <span class="dv">0</span>, <span class="at">early_stopping_rounds=</span><span class="dv">8</span>, <span class="at">maximize=</span><span class="cn">FALSE</span>)</span>
+<span id="cb3-72"><a href="#cb3-72" tabindex="-1"></a>    </span>
+<span id="cb3-73"><a href="#cb3-73" tabindex="-1"></a>    min_logloss <span class="ot">=</span> <span class="fu">min</span>(mdcv<span class="sc">$</span>evaluation_log<span class="sc">$</span>test_mlogloss_mean)</span>
+<span id="cb3-74"><a href="#cb3-74" tabindex="-1"></a>    min_logloss_index <span class="ot">=</span> <span class="fu">which.min</span>(mdcv<span class="sc">$</span>evaluation_log<span class="sc">$</span>test_mlogloss_mean)</span>
+<span id="cb3-75"><a href="#cb3-75" tabindex="-1"></a>    </span>
+<span id="cb3-76"><a href="#cb3-76" tabindex="-1"></a>    <span class="cf">if</span> (min_logloss <span class="sc">&lt;</span> best_logloss) {</span>
+<span id="cb3-77"><a href="#cb3-77" tabindex="-1"></a>      best_logloss <span class="ot">=</span> min_logloss</span>
+<span id="cb3-78"><a href="#cb3-78" tabindex="-1"></a>      best_logloss_index <span class="ot">=</span> min_logloss_index</span>
+<span id="cb3-79"><a href="#cb3-79" tabindex="-1"></a>      best_seednumber <span class="ot">=</span> seed.number</span>
+<span id="cb3-80"><a href="#cb3-80" tabindex="-1"></a>      best_param <span class="ot">=</span> param</span>
+<span id="cb3-81"><a href="#cb3-81" tabindex="-1"></a>    }</span>
+<span id="cb3-82"><a href="#cb3-82" tabindex="-1"></a>  }</span>
+<span id="cb3-83"><a href="#cb3-83" tabindex="-1"></a>  </span>
+<span id="cb3-84"><a href="#cb3-84" tabindex="-1"></a>  nround <span class="ot">=</span> best_logloss_index</span>
+<span id="cb3-85"><a href="#cb3-85" tabindex="-1"></a>  <span class="fu">set.seed</span>(best_seednumber)</span>
+<span id="cb3-86"><a href="#cb3-86" tabindex="-1"></a>  </span>
+<span id="cb3-87"><a href="#cb3-87" tabindex="-1"></a>  <span class="do">##use the best parameter in cross validation to train a XGBoost model </span></span>
+<span id="cb3-88"><a href="#cb3-88" tabindex="-1"></a>  md <span class="ot">&lt;-</span> <span class="fu">xgboost</span>(<span class="at">data=</span>dtrain, <span class="at">params=</span>best_param, <span class="at">nrounds=</span>nround, <span class="at">nthread=</span><span class="dv">6</span>,<span class="at">verbose =</span> <span class="dv">0</span>)</span>
+<span id="cb3-89"><a href="#cb3-89" tabindex="-1"></a>  pre_xgb_train <span class="ot">=</span> <span class="fu">predict</span>(md,<span class="at">newdata =</span> dtrain)</span>
+<span id="cb3-90"><a href="#cb3-90" tabindex="-1"></a>  pre_train<span class="ot">&lt;-</span><span class="fu">numeric</span>(<span class="fu">length</span>(train_ind))</span>
+<span id="cb3-91"><a href="#cb3-91" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(train_ind)){</span>
+<span id="cb3-92"><a href="#cb3-92" tabindex="-1"></a>    pre_train[i]<span class="ot">=</span>pre_xgb_train[<span class="dv">2</span><span class="sc">*</span>i]</span>
+<span id="cb3-93"><a href="#cb3-93" tabindex="-1"></a>  }</span>
+<span id="cb3-94"><a href="#cb3-94" tabindex="-1"></a>  xgboost_prob_train <span class="ot">&lt;-</span> <span class="fu">roc</span>(train_fin<span class="sc">$</span>label,<span class="fu">as.numeric</span>(pre_train),<span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>),</span>
+<span id="cb3-95"><a href="#cb3-95" tabindex="-1"></a>                           <span class="at">direction=</span><span class="st">&#39;&lt;&#39;</span>)</span>
+<span id="cb3-96"><a href="#cb3-96" tabindex="-1"></a>  </span>
+<span id="cb3-97"><a href="#cb3-97" tabindex="-1"></a>  pre_xgb_test <span class="ot">=</span> <span class="fu">predict</span>(md,<span class="at">newdata =</span> dtest)</span>
+<span id="cb3-98"><a href="#cb3-98" tabindex="-1"></a>  pre_test<span class="ot">&lt;-</span><span class="fu">numeric</span>(<span class="fu">dim</span>(data_temp)[<span class="dv">1</span>]<span class="sc">-</span><span class="fu">length</span>(train_ind))</span>
+<span id="cb3-99"><a href="#cb3-99" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>(<span class="fu">dim</span>(data_temp)[<span class="dv">1</span>]<span class="sc">-</span><span class="fu">length</span>(train_ind))){</span>
+<span id="cb3-100"><a href="#cb3-100" tabindex="-1"></a>    pre_test[i]<span class="ot">=</span>pre_xgb_test[<span class="dv">2</span><span class="sc">*</span>i]</span>
+<span id="cb3-101"><a href="#cb3-101" tabindex="-1"></a>  }</span>
+<span id="cb3-102"><a href="#cb3-102" tabindex="-1"></a>  xgboost_prob_test <span class="ot">&lt;-</span> <span class="fu">roc</span>(test_fin<span class="sc">$</span>label,<span class="fu">as.numeric</span>(pre_test),<span class="at">levels =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>),</span>
+<span id="cb3-103"><a href="#cb3-103" tabindex="-1"></a>                          <span class="at">direction=</span><span class="st">&#39;&lt;&#39;</span>)</span>
+<span id="cb3-104"><a href="#cb3-104" tabindex="-1"></a>  </span>
+<span id="cb3-105"><a href="#cb3-105" tabindex="-1"></a>  confusion_matrix<span class="ot">&lt;-</span><span class="fu">confusionMatrix</span>(<span class="fu">factor</span>(<span class="fu">round</span>(pre_test),<span class="at">levels=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>)),<span class="fu">factor</span>(test_fin<span class="sc">$</span>label,<span class="at">levels=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>)))</span>
+<span id="cb3-106"><a href="#cb3-106" tabindex="-1"></a>  </span>
+<span id="cb3-107"><a href="#cb3-107" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">list</span>(<span class="at">prob_train=</span>xgboost_prob_train,<span class="at">prob_test=</span>xgboost_prob_test,<span class="at">confusion_matrix=</span>confusion_matrix<span class="sc">$</span>table,<span class="at">md=</span>md))</span>
+<span id="cb3-108"><a href="#cb3-108" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="plot_roc" class="section level2">
+<h2><em>plot_roc</em></h2>
+<p><em>plot_roc</em> 用于绘制上述模型预测结果的roc曲线。</p>
+<p>The source R code for <em>plot_roc</em> is as follows:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>plot_roc<span class="ot">&lt;-</span><span class="cf">function</span>(roc_value){</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="fu">plot.roc</span>(roc_value, <span class="at">print.auc=</span><span class="cn">TRUE</span>, <span class="at">auc.polygon=</span><span class="cn">TRUE</span>, </span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>       <span class="at">grid=</span><span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.2</span>),<span class="at">grid.col=</span><span class="fu">c</span>(<span class="st">&quot;green&quot;</span>, <span class="st">&quot;red&quot;</span>), </span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>       <span class="at">max.auc.polygon=</span><span class="cn">TRUE</span>,<span class="at">auc.polygon.col=</span><span class="st">&quot;skyblue&quot;</span>, </span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>       <span class="at">print.thres=</span><span class="cn">TRUE</span>,<span class="at">main=</span><span class="st">&#39;prognostic model of XGBoost algorithm&#39;</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="plot_confusion_matrix" class="section level2">
+<h2><em>plot_confusion_matrix</em></h2>
+<p><em>plot_confusion_matrix</em>
+用于可视化上述模型预测结果的混淆矩阵。</p>
+<p>The source R code for <em>plot_confusion_matrix</em> is as
+follows:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>plot_confusion_matrix<span class="ot">&lt;-</span><span class="cf">function</span>(confusion_matrix){</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="fu">fourfoldplot</span>(confusion_matrix,<span class="at">color=</span><span class="fu">c</span>(<span class="st">&quot;#2E86C1&quot;</span>,<span class="st">&quot;#D6EAF8&quot;</span>),<span class="at">main =</span> <span class="st">&quot;Confusion Matrix&quot;</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="an-example-of-xgb_md-plot_roc-and-plot_confusion_matrix" class="section level2">
+<h2>An example of <em>XGB_md</em> , <em>plot_roc</em> and
+<em>plot_confusion_matrix</em></h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">library</span>(SA23204159)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">data</span>(lung)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>data<span class="ot">=</span>lung</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="do">##由于数据较多，从数据中随机抽取2000个样本</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>ind<span class="ot">&lt;-</span><span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(data)[<span class="dv">1</span>]),<span class="dv">2000</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>data<span class="ot">&lt;-</span>data[ind,]</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>res<span class="ot">&lt;-</span><span class="fu">XGB_md</span>(<span class="dv">18</span>,data)</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="fu">plot_roc</span>(res<span class="sc">$</span>prob_train)</span></code></pre></div>
 <p><img src="data:image/png;base64,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" /><!-- --></p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">plot_confusion_matrix</span>(res<span class="sc">$</span>confusion_matrix)</span></code></pre></div>
-<p><img src="data:image/png;base64,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" /><!-- -->
-an example of <em>studentized_bootstrap_ci</em> and
-<em>studentized_bootstrap_ci_C</em>,use dataset <em>lung</em> to
-construct 95% CI of survival month.</p>
-<p>studentized_bootstrap_ci函数用于构造某一变量的studentized bootstrap
-95%置信区间，在本例中，使用studentized_bootstrap_ci函数构造肺癌患者存活时间的95%置信区间，</p>
-<p>studentized_bootstrap_ci_C函数是上述函数的CPP版。</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">library</span>(SA23204159)</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">data</span>(lung)</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>data<span class="ot">=</span>lung</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="do">##由于数据较多，从数据中随机抽取1000个样本</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>ind<span class="ot">&lt;-</span><span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(data)[<span class="dv">1</span>]),<span class="dv">1000</span>)</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>data<span class="ot">&lt;-</span>data[ind,]</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>ci1<span class="ot">&lt;-</span><span class="fu">studentized_bootstrap_ci</span>(data<span class="sc">$</span>存活时间)</span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>ci2<span class="ot">&lt;-</span><span class="fu">studentized_bootstrap_ci_C</span>(data<span class="sc">$</span>存活时间) <span class="do">##Rcpp version</span></span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="fu">print</span>(ci1)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">plot_confusion_matrix</span>(res<span class="sc">$</span>confusion_matrix)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+</div>
+<div id="studentized_bootstrap_ci" class="section level2">
+<h2><em>studentized_bootstrap_ci</em></h2>
+<p><em>studentized_bootstrap_ci</em> 函数用于构造某一变量的studentized
+bootstrap 95%置信区间。</p>
+<p>The source R code for <em>studentized_bootstrap_ci</em> is as
+follows:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>studentized_bootstrap_ci <span class="ot">&lt;-</span> <span class="cf">function</span>(X,<span class="at">B=</span><span class="dv">500</span>) {</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  n<span class="ot">&lt;-</span><span class="fu">length</span>(X)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  theta_star<span class="ot">&lt;-</span><span class="fu">numeric</span>(B)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  se_star<span class="ot">&lt;-</span><span class="fu">numeric</span>(B)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>B){   <span class="do">##一次抽样</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>    ind<span class="ot">&lt;-</span><span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span>n),<span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>    x_star<span class="ot">&lt;-</span>X[ind]</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>    theta_star[i]<span class="ot">&lt;-</span><span class="fu">mean</span>(x_star)</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>    theta_star_second<span class="ot">&lt;-</span><span class="fu">numeric</span>(B)</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>    <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>B){  <span class="do">##二次抽样</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>      ind_second<span class="ot">&lt;-</span><span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span>n),<span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>      x_star_second<span class="ot">&lt;-</span>x_star[ind_second]</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>      theta_star_second[j]<span class="ot">&lt;-</span><span class="fu">mean</span>(x_star_second)</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>    }</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>    se_star[i]<span class="ot">&lt;-</span><span class="fu">sd</span>(theta_star_second)</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>  }</span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>  theta<span class="ot">&lt;-</span><span class="fu">mean</span>(X)</span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>  se1<span class="ot">&lt;-</span><span class="fu">sd</span>(theta_star)</span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>  quantile_1<span class="ot">&lt;-</span><span class="fu">quantile</span>((theta_star<span class="sc">-</span>theta)<span class="sc">/</span>se_star,<span class="fu">c</span>(<span class="fl">0.025</span>,<span class="fl">0.975</span>))</span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>  lower<span class="ot">&lt;-</span>theta<span class="sc">-</span><span class="fu">as.numeric</span>(quantile_1[<span class="dv">2</span>])<span class="sc">*</span>se1</span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>  upper<span class="ot">&lt;-</span>theta<span class="sc">-</span><span class="fu">as.numeric</span>(quantile_1[<span class="dv">1</span>])<span class="sc">*</span>se1</span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">c</span>(lower,upper))</span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="studentized_bootstrap_ci_c" class="section level2">
+<h2><em>studentized_bootstrap_ci_C</em></h2>
+<p><em>studentized_bootstrap_ci_C</em> 函数是上述函数的RCPP版。</p>
+<p>The source R code for <em>studentized_bootstrap_ci_C</em> is as
+follows:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>NumericVector <span class="fu">studentized_bootstrap_ci_C</span>(NumericVector X, int <span class="at">B=</span><span class="dv">500</span>) {</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  NumericVector <span class="fu">ci</span>(<span class="dv">2</span>);</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  int n<span class="ot">=</span><span class="fu">X.size</span>();</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  NumericVector <span class="fu">theta_star</span>(B);</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  NumericVector <span class="fu">se_star</span>(B);</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  NumericVector <span class="fu">x_star</span>(n);</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  NumericVector <span class="fu">theta_star_second</span>(B);</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  NumericVector <span class="fu">x_star_second</span>(n);</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  int ind1,ind2;</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  double sum;</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  double mean;</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  int ind;</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>  double variance;</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  <span class="cf">for</span>(int <span class="at">i =</span> <span class="dv">0</span>; i <span class="sc">&lt;</span> B; i<span class="sc">++</span>) {</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>    <span class="cf">for</span>(int <span class="at">j=</span><span class="dv">0</span>;j<span class="sc">&lt;</span>n;j<span class="sc">++</span>){</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>      ind<span class="ot">=</span><span class="dv">0</span> <span class="sc">+</span> <span class="fu">rand</span>()%n;</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>      x_star[j]<span class="ot">=</span>X[ind];</span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>    }</span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>    sum <span class="ot">=</span> std<span class="sc">::</span><span class="fu">accumulate</span>(std<span class="sc">::</span><span class="fu">begin</span>(x_star), std<span class="sc">::</span><span class="fu">end</span>(x_star), <span class="fl">0.0</span>);</span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>    theta_star[i]<span class="ot">=</span>sum<span class="sc">/</span>n;</span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>    <span class="cf">for</span>(int <span class="at">k=</span><span class="dv">0</span>;k<span class="sc">&lt;</span>B;k<span class="sc">++</span>){</span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a>      <span class="cf">for</span>(int <span class="at">j=</span><span class="dv">0</span>;j<span class="sc">&lt;</span>n;j<span class="sc">++</span>){</span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a>      ind<span class="ot">=</span><span class="fu">rand</span>()%n;</span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a>      x_star_second[j]<span class="ot">=</span>x_star[ind];</span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a>    }</span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a>    sum <span class="ot">=</span> std<span class="sc">::</span><span class="fu">accumulate</span>(std<span class="sc">::</span><span class="fu">begin</span>(x_star_second), std<span class="sc">::</span><span class="fu">end</span>(x_star_second), <span class="fl">0.0</span>);</span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a>    theta_star_second[k]<span class="ot">=</span>sum<span class="sc">/</span>n;</span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a>    }</span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a>    sum <span class="ot">=</span> std<span class="sc">::</span><span class="fu">accumulate</span>(std<span class="sc">::</span><span class="fu">begin</span>(theta_star_second), std<span class="sc">::</span><span class="fu">end</span>(theta_star_second), <span class="fl">0.0</span>);</span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a>    mean<span class="ot">=</span>sum<span class="sc">/</span>B;</span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a>    variance <span class="ot">=</span> <span class="fl">0.0</span>;</span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a>    std<span class="sc">::</span><span class="fu">for_each</span>(std<span class="sc">::</span><span class="fu">begin</span>(theta_star_second), std<span class="sc">::</span><span class="fu">end</span>(theta_star_second), [<span class="sc">&amp;</span>](const double d) {</span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a>        variance <span class="sc">+</span><span class="er">=</span> <span class="fu">pow</span>(d<span class="sc">-</span>mean, <span class="dv">2</span>);</span>
+<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a>    });</span>
+<span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a>    variance <span class="sc">/</span><span class="er">=</span> B;</span>
+<span id="cb9-36"><a href="#cb9-36" tabindex="-1"></a>    se_star[i]<span class="ot">=</span><span class="fu">sqrt</span>(variance);</span>
+<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a>  }</span>
+<span id="cb9-38"><a href="#cb9-38" tabindex="-1"></a>  double theta;</span>
+<span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a>  sum <span class="ot">=</span> std<span class="sc">::</span><span class="fu">accumulate</span>(std<span class="sc">::</span><span class="fu">begin</span>(X), std<span class="sc">::</span><span class="fu">end</span>(X), <span class="fl">0.0</span>);</span>
+<span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a>  theta<span class="ot">=</span>sum<span class="sc">/</span>n;</span>
+<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a></span>
+<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a>  sum <span class="ot">=</span> std<span class="sc">::</span><span class="fu">accumulate</span>(std<span class="sc">::</span><span class="fu">begin</span>(theta_star), std<span class="sc">::</span><span class="fu">end</span>(theta_star), <span class="fl">0.0</span>);</span>
+<span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a>  mean<span class="ot">=</span>sum<span class="sc">/</span>B;</span>
+<span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a>  variance <span class="ot">=</span> <span class="fl">0.0</span>;</span>
+<span id="cb9-45"><a href="#cb9-45" tabindex="-1"></a>  std<span class="sc">::</span><span class="fu">for_each</span>(std<span class="sc">::</span><span class="fu">begin</span>(theta_star_second), std<span class="sc">::</span><span class="fu">end</span>(theta_star_second), [<span class="sc">&amp;</span>](const double d) {</span>
+<span id="cb9-46"><a href="#cb9-46" tabindex="-1"></a>      variance <span class="sc">+</span><span class="er">=</span> <span class="fu">pow</span>(d<span class="sc">-</span>mean, <span class="dv">2</span>);</span>
+<span id="cb9-47"><a href="#cb9-47" tabindex="-1"></a>  });</span>
+<span id="cb9-48"><a href="#cb9-48" tabindex="-1"></a>  variance <span class="sc">/</span><span class="er">=</span> B;</span>
+<span id="cb9-49"><a href="#cb9-49" tabindex="-1"></a>  double se1<span class="ot">=</span><span class="fu">sqrt</span>(variance);</span>
+<span id="cb9-50"><a href="#cb9-50" tabindex="-1"></a>  NumericVector <span class="fu">t</span>(B);</span>
+<span id="cb9-51"><a href="#cb9-51" tabindex="-1"></a>  <span class="cf">for</span>(int <span class="at">k=</span><span class="dv">0</span>;k<span class="sc">&lt;</span>B;k<span class="sc">++</span>){</span>
+<span id="cb9-52"><a href="#cb9-52" tabindex="-1"></a>      t[k]<span class="ot">=</span>(theta_star[k]<span class="sc">-</span>theta)<span class="sc">/</span>se_star[k];</span>
+<span id="cb9-53"><a href="#cb9-53" tabindex="-1"></a>  }</span>
+<span id="cb9-54"><a href="#cb9-54" tabindex="-1"></a>  std<span class="sc">::</span><span class="fu">sort</span>(<span class="fu">t.begin</span>(),<span class="fu">t.end</span>());</span>
+<span id="cb9-55"><a href="#cb9-55" tabindex="-1"></a>  ind1<span class="ot">=</span><span class="fu">round</span>(<span class="fl">0.025</span><span class="sc">*</span>n<span class="dv">-1</span>);</span>
+<span id="cb9-56"><a href="#cb9-56" tabindex="-1"></a>  ind2<span class="ot">=</span><span class="fu">round</span>(<span class="fl">0.975</span><span class="sc">*</span>n<span class="dv">-1</span>);</span>
+<span id="cb9-57"><a href="#cb9-57" tabindex="-1"></a>  double q1<span class="ot">=</span>t[ind1];</span>
+<span id="cb9-58"><a href="#cb9-58" tabindex="-1"></a>  double q2<span class="ot">=</span>t[ind2];</span>
+<span id="cb9-59"><a href="#cb9-59" tabindex="-1"></a>  ci[<span class="dv">0</span>]<span class="ot">=</span>theta<span class="sc">-</span>q2<span class="sc">*</span>se1;</span>
+<span id="cb9-60"><a href="#cb9-60" tabindex="-1"></a>  ci[<span class="dv">1</span>]<span class="ot">=</span>theta<span class="sc">-</span>q1<span class="sc">*</span>se1;</span>
+<span id="cb9-61"><a href="#cb9-61" tabindex="-1"></a>  <span class="fu">return</span>(ci);</span>
+<span id="cb9-62"><a href="#cb9-62" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="an-example-of-studentized_bootstrap_ci-and-studentized_bootstrap_ci_c" class="section level2">
+<h2>an example of <em>studentized_bootstrap_ci</em> and
+<em>studentized_bootstrap_ci_C</em></h2>
+<p>在本例中，使用 <em>studentized_bootstrap_ci</em> 和
+<em>studentized_bootstrap_ci_C</em>
+函数构造肺癌患者存活时间的95%置信区间，</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">library</span>(SA23204159)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">data</span>(lung)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>data<span class="ot">=</span>lung</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="do">##由于数据较多，从数据中随机抽取1000个样本</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>ind<span class="ot">&lt;-</span><span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(data)[<span class="dv">1</span>]),<span class="dv">1000</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>data<span class="ot">&lt;-</span>data[ind,]</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>ci1<span class="ot">&lt;-</span><span class="fu">studentized_bootstrap_ci</span>(data<span class="sc">$</span>存活时间)</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>ci2<span class="ot">&lt;-</span><span class="fu">studentized_bootstrap_ci_C</span>(data<span class="sc">$</span>存活时间) <span class="do">##Rcpp version</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="fu">print</span>(ci1)</span></code></pre></div>
 <pre><code>## [1] 7.391087 8.758570</code></pre>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">print</span>(ci2)</span></code></pre></div>
-<pre><code>## [1] 8.043000 8.704116</code></pre>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">print</span>(ci2)</span></code></pre></div>
+<pre><code>## [1]  8.04300 10.16004</code></pre>
 </div>
 <div id="benchmarking-studentized_bootstrap_ci-and-studentized_bootstrap_ci_c" class="section level2">
 <h2>Benchmarking <em>studentized_bootstrap_ci</em> and
 <em>studentized_bootstrap_ci_C</em></h2>
 <p>The R code for benchmarking <em>studentized_bootstrap_ci</em> and
 <em>studentized_bootstrap_ci_C</em> is as follows.</p>
-<p>比较studentized_bootstrap_ci函数和studentized_bootstrap_ci_C的运行时间。</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">library</span>(microbenchmark)</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">library</span>(SA23204159)</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">data</span>(lung)</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>data<span class="ot">=</span>lung</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="do">##由于数据较多，从数据中随机抽取500个样本</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>ind<span class="ot">&lt;-</span><span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(data)[<span class="dv">1</span>]),<span class="dv">500</span>)</span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>data<span class="ot">&lt;-</span>data[ind,]</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>tm <span class="ot">&lt;-</span> <span class="fu">microbenchmark</span>(</span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="at">vR =</span> <span class="fu">studentized_bootstrap_ci</span>(data<span class="sc">$</span>存活时间),</span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="at">vC =</span> <span class="fu">studentized_bootstrap_ci_C</span>(data<span class="sc">$</span>存活时间),   <span class="do">##Rcpp version</span></span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  <span class="at">times =</span> <span class="dv">20</span></span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>)</span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">summary</span>(tm)[,<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="dv">6</span>)])</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">library</span>(microbenchmark)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="fu">library</span>(SA23204159)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="fu">data</span>(lung)</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>data<span class="ot">=</span>lung</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="do">##由于数据较多，从数据中随机抽取500个样本</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>ind<span class="ot">&lt;-</span><span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">dim</span>(data)[<span class="dv">1</span>]),<span class="dv">500</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>data<span class="ot">&lt;-</span>data[ind,]</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>tm <span class="ot">&lt;-</span> <span class="fu">microbenchmark</span>(</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>  <span class="at">vR =</span> <span class="fu">studentized_bootstrap_ci</span>(data<span class="sc">$</span>存活时间),</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>  <span class="at">vC =</span> <span class="fu">studentized_bootstrap_ci_C</span>(data<span class="sc">$</span>存活时间),   <span class="do">##Rcpp version</span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>  <span class="at">times =</span> <span class="dv">20</span></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>)</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">summary</span>(tm)[,<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="dv">6</span>)])</span></code></pre></div>
 <table>
 <thead>
 <tr class="header">
@@ -452,20 +684,20 @@ construct 95% CI of survival month.</p>
 <tbody>
 <tr class="odd">
 <td align="left">vR</td>
-<td align="right">9.399403</td>
-<td align="right">9.507909</td>
-<td align="right">9.570493</td>
+<td align="right">9.412350</td>
+<td align="right">9.466209</td>
+<td align="right">9.643981</td>
 </tr>
 <tr class="even">
 <td align="left">vC</td>
-<td align="right">2.588896</td>
-<td align="right">2.594514</td>
-<td align="right">2.615475</td>
+<td align="right">2.590459</td>
+<td align="right">2.598577</td>
+<td align="right">2.614913</td>
 </tr>
 </tbody>
 </table>
-<p>The results again show an evident computational speed gain of C++
-against R.</p>
+<p>The results show an evident computational speed gain of C++ against
+R.</p>
 </div>
 
 

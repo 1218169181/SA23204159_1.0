@@ -2,7 +2,7 @@
 % Please edit documentation in R/SA23204159.R
 \name{XGB_md}
 \alias{XGB_md}
-\title{A Gibbs sampler using R}
+\title{Train a predictive model use XGBoost algorithm}
 \usage{
 XGB_md(n_month, data, seed_number = 12345)
 }
@@ -14,10 +14,10 @@ XGB_md(n_month, data, seed_number = 12345)
 \item{seed_number}{the number of seed that we want to set}
 }
 \value{
-a list contains prob_train,prob_test,confusionmatrix,md.  prob_train:predicted probility of dead at endpoint on train data,prob_test:predicted probility of dead at endpoint on test data,confusion_matrix:confusion matrix on test data,md:predictive model
+a list contains prob_train, prob_test, confusionmatrix, md. Prob_train:predicted probility of dead at endpoint on train data,prob_test:predicted probility of dead at endpoint on test data,confusion_matrix:confusion matrix on test data,md:predictive model
 }
 \description{
-A Gibbs sampler using R
+Train a predictive model use XGBoost algorithm
 }
 \examples{
 \dontrun{

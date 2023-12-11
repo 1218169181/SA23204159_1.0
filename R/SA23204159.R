@@ -31,12 +31,12 @@ NULL
 NULL
 
 
-#' @title A Gibbs sampler using R
-#' @description A Gibbs sampler using R
+#' @title Train a predictive model use XGBoost algorithm
+#' @description Train a predictive model use XGBoost algorithm
 #' @param n_month the number of month that we want to predict the survival of patient
 #' @param data the dataset that we use to construct XGBoost prognostic model.The data should in the form that last columns is the endpoint of status and
 #' @param seed_number the number of seed that we want to set
-#' @return a list contains prob_train,prob_test,confusionmatrix,md.  prob_train:predicted probility of dead at endpoint on train data,prob_test:predicted probility of dead at endpoint on test data,confusion_matrix:confusion matrix on test data,md:predictive model
+#' @return a list contains prob_train, prob_test, confusionmatrix, md. Prob_train:predicted probility of dead at endpoint on train data,prob_test:predicted probility of dead at endpoint on test data,confusion_matrix:confusion matrix on test data,md:predictive model
 #' @examples
 #' \dontrun{
 #' data(lung)
